@@ -1,5 +1,9 @@
+use tide::Request;
+use tide::prelude::*;
+use mongodb::bson::doc;
 mod util;
 mod keyword;
+mod db;
 
 #[cfg(test)]
 mod tests {
@@ -22,14 +26,18 @@ mod tests {
 }
 
 
-fn main() {
+
+#[async_std::main]
+async fn main() -> mongodb::error::Result<()> {
     
-    let text = "However, just to be safe, let's enable Geolocation API as well";
+    let docs = vec![
+    doc! { "title": "1984", "author": "George Orwell" },
+    doc! { "title": "Animal Farm", "author": "George Orwell" },
+    doc! { "title": "The Great Gatsby", "author": "F. Scott Fitzgerald" },
+];
 
-    let kws = keyword::get_keywords(text);
+    db::insert_into_db(docs).await?;
 
-    for kw in kws {
-        println!("{}", kw);
-    }
+    Ok(())
 
 }
