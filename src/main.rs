@@ -1,43 +1,23 @@
-use tide::Request;
-use tide::prelude::*;
-use mongodb::bson::doc;
-mod util;
-mod keyword;
-mod db;
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+mod routes;
+mod state;
 
-    #[test]
-    fn test_split_article() {
-        let article = "Hello. What? Me!";
-        let split = util::split_article(article).unwrap();
-        assert_eq!(split, vec!["Hello", "What", "Me"]);
-    }
-
-    #[test]
-    fn test_split_sentence() {
-        let sentences = vec!["Hello world!", "Assume the worst about this"];
-        let sentences_split = vec![vec!["Hello", "world!"], vec!["Assume", "the", "worst", "about", "this"]];
-        let split = util::split_sentence(sentences).unwrap();
-        assert_eq!(split, sentences_split);
-    }
-}
-
-
+use state::State;
 
 #[async_std::main]
-async fn main() -> mongodb::error::Result<()> {
-    
-    let docs = vec![
-    doc! { "title": "1984", "author": "George Orwell" },
-    doc! { "title": "Animal Farm", "author": "George Orwell" },
-    doc! { "title": "The Great Gatsby", "author": "F. Scott Fitzgerald" },
-];
+async fn main() -> tide::Result<()> {
+    femme::start(log::LevelFilter::Debug)?;
 
-    db::insert_into_db(docs).await?;
+    let db_uri = "mongodb://chubak:4d4m4k_Dummy@142.93.110.205:27017/";
+    let state = State::new(db_uri).await?;
+    let mut app = tide::with_state(state);
+
+    app.at("/list").get(routes::list_dbs);
+    app.at("/:db/list").get(routes::list_colls);
+    app.at("/:db/:collection").post(routes::insert_doc);
+    app.at("/:db/:collection").get(routes::find_doc);
+    app.at("/:db/:collection/update").get(routes::update_doc);
+    app.listen("localhost:8080").await?;
 
     Ok(())
-
 }

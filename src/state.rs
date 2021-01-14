@@ -1,4 +1,4 @@
-#[derive(Debug)]
+#[derive(Clone)]
 pub(crate) struct State {
     pub db: mongodb::Client,
 }
